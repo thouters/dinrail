@@ -1,11 +1,20 @@
 include <contoursaddle.scad>;
 use <rpipcb.scad>;
 
-PARTNO = 0;
+PARTNO_ALL = 0;
+PARTNO_CHASSIS = 1;
+PARTNO_FRONT = 2;
+PARTNO_TOP = 3;
+
+/* change the defaultpartno to view parts during development */
+defaultpartno=PARTNO_ALL;
+/* overridden to generate individual parts with -D in the Makefile */
+PARTNO = defaultpartno;
+
 $fn=100;
 fdm = 0;
 tft_z=40;
-tftoff_x = 76;
+tftoff_x = 74;
 tftoff_y= 22;
 tftoff_z=2;
 tft_margin_connector=5.5;
@@ -14,7 +23,7 @@ plate_thickness=1.2;
 tft_x = 1.6;
 tft_y=67.5;
 finger_y=5;
-finger_x=2;
+finger_x=3;
 finger_z=6;
 pirplate_y=95;
 pirplate_x=2;
@@ -28,20 +37,41 @@ railcontact_z = frontplate_z;
 clip_padding_z = (railcontact_z - dinrail_z)/2;
 
 x_support_z = 8;
+
+ridge_z = 2;
+fan_x = 13;
+fan_y = 25;
+
 module topplate()
 {
     difference()
     {
-        cube([1+tftoff_x+tft_x,frontplate_y,plate_thickness]);
-        translate([12, 25,-10])
+        /* plate */
+        cube([
+            1+tftoff_x+tft_x,
+            frontplate_y,
+            plate_thickness]);
+        /* hole for fan */
+        translate([fan_x, fan_y,-10])
             cube([50,50,50]);
     }
-    translate([12,25,plate_thickness])
+    // ridge
+    translate([0,0,-ridge_z])
+    cube([
+        2,
+        frontplate_y,
+        ridge_z]);
+
+    /* fan holder */
+    translate([fan_x,fan_y,plate_thickness])
     {
+        fan_xy = 50;
+        fan_z = 11.5;
         mirror([0,0,1])
-        contoursaddle(50,50, 7, 4, 2, 2);
+        contoursaddle(fan_xy,fan_xy, plate_thickness + fan_z, plate_thickness, 2, 2);
     }
 
+    /* mounting holes for tft */
     for(leg_y =[0,tft_y-x_support_z])
     {
         translate([0,tftoff_y+leg_y,0])
@@ -60,8 +90,8 @@ module topplate()
                         translate([-tft_x-finger_x,0,0])
                             cube([finger_x,finger_y,finger_z]);
                     }
-                    translate([finger_x/2,finger_y/2,finger_z/2])
-                        rotate([0,90,0]) cylinder(10 ,d=3,center=true);
+//                    translate([finger_x/2,finger_y/2,finger_z/2])
+//                        rotate([0,90,0]) cylinder(10 ,d=3,center=true);
                 }
             }
         }
@@ -69,14 +99,14 @@ module topplate()
 
 }
 
-if (PARTNO == 3||PARTNO==0)
+if (PARTNO == PARTNO_TOP||PARTNO==PARTNO_ALL)
 {
     color("orange")
-    translate([2,0,railcontact_z - plate_thickness - 2])
+    translate([2,0,railcontact_z- 2])
     topplate();
 }
 
-if(PARTNO==1||PARTNO==0)
+if(PARTNO==PARTNO_CHASSIS||PARTNO==PARTNO_ALL)
 {
     difference()
     {
@@ -84,9 +114,17 @@ if(PARTNO==1||PARTNO==0)
         {
             translate([160,-123,0])
             {
+                union()
+                {
                 linear_extrude(clip_padding_z)
                 projection(cut=true)
                 import("DIN_DEFAULT.stl");
+                translate([-160,160+40,0])
+                {
+                    cube([5,13,railcontact_z]);
+                }
+                }
+
                 translate([0,0,clip_padding_z])
                 {
                     import("DIN_DEFAULT.stl");
@@ -97,10 +135,31 @@ if(PARTNO==1||PARTNO==0)
                 }
             }
         }
-        translate([2,0,railcontact_z - plate_thickness - 2])
+        // top plate
+        translate([2,0,railcontact_z - 2*plate_thickness ])
         {
             cube([1+tftoff_x+tft_x,frontplate_y,plate_thickness+0.2]);
+            translate([0,0,-ridge_z])
+            cube([
+                2,
+                frontplate_y,
+                ridge_z]);
         }
+        // back clip
+        translate([-7,0,railcontact_z - plate_thickness ])
+        {
+            cube([13,frontplate_y,plate_thickness+0.2]);
+
+        translate([0,0,- (plate_thickness+0.2) ])
+            cube([7,frontplate_y,plate_thickness+0.2]);
+        }
+
+
+        translate([-7,0,0])
+            cube([13,frontplate_y,plate_thickness+0.2]);
+
+        translate([-7,0,0])
+            cube([7,frontplate_y,plate_thickness+0.2]);
     }
 
     // clip/lock holder
@@ -110,7 +169,10 @@ if(PARTNO==1||PARTNO==0)
     translate([0,20,0])
         cube([10,tft_y,2]);
 
-    translate([10,89,0])
+    translate([tftoff_x-10,0,0])
+        cube([14.6,tft_y+tftoff_y+0,2]);
+
+    translate([8,89,0])
     rotate([0,0,-90])
             rpicradle();
 
@@ -134,15 +196,15 @@ if(PARTNO==1||PARTNO==0)
                         translate([-tft_x-finger_x,0,0])
                             cube([finger_x,finger_y,finger_z]);
                     }
-                    translate([finger_x/2,finger_y/2,finger_z/2])
-                        rotate([0,90,0]) cylinder(10 ,d=3,center=true);
+//                    translate([finger_x/2,finger_y/2,finger_z/2])
+//                        rotate([0,90,0]) cylinder(10 ,d=3,center=true);
                 }
             }
         }
     }
 }
 
-if (PARTNO==0)
+if (PARTNO==PARTNO_ALL)
 {
 /* display dummy */
     translate([0,0,tftoff_z])
@@ -164,11 +226,13 @@ if (PARTNO==0)
 }
 
 
-if(PARTNO==2||PARTNO==0)
+if(PARTNO==PARTNO_FRONT||PARTNO==PARTNO_ALL)
 {
     translate([tftoff_x+tft_x,0,0])
     {
         frontplate_margin=plate_thickness;
+        frontplate_margin_x = 5;
+        front_x = 2;
         translate([ 
             -tft_x-pirplate_x+5,
             -frontplate_margin,
@@ -178,7 +242,7 @@ if(PARTNO==2||PARTNO==0)
             color("green")
             difference()
             {
-                cube([plate_thickness,
+                cube([front_x,
                     frontplate_y+2*frontplate_margin,
                     frontplate_z+2*frontplate_margin]);
 
@@ -204,14 +268,14 @@ if(PARTNO==2||PARTNO==0)
             for(y =[0,frontplate_y+frontplate_margin])
             {
                 color("black")
-                translate([-plate_thickness,y,0])
-                cube([2*plate_thickness,plate_thickness,frontplate_z+2*frontplate_margin]);
+                translate([-frontplate_margin_x,y,0])
+                cube([frontplate_margin_x,plate_thickness,frontplate_z+2*frontplate_margin]);
             }
             for(z =[0,frontplate_z+frontplate_margin])
             {
                 color("black")
-                translate([-plate_thickness,0,z])
-                cube([2*plate_thickness,frontplate_y+2*frontplate_margin,plate_thickness]);
+                translate([-frontplate_margin_x,0,z])
+                cube([frontplate_margin_x,frontplate_y+2*frontplate_margin,plate_thickness]);
             }
 
         }
