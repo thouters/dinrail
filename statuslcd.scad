@@ -5,9 +5,11 @@ PARTNO_ALL = 0;
 PARTNO_CHASSIS = 1;
 PARTNO_FRONT = 2;
 PARTNO_TOP = 3;
+PARTNO_BUTTON = 4;
+PARTNO_BUTTON_HOLDER = 5;
 
 /* change the defaultpartno to view parts during development */
-defaultpartno=PARTNO_ALL;
+defaultpartno=PARTNO_BUTTON_HOLDER;
 /* overridden to generate individual parts with -D in the Makefile */
 PARTNO = defaultpartno;
 
@@ -31,6 +33,7 @@ piroff_y=90;
 frontplate_z=tft_z+1*tftoff_z+2*plate_thickness;
 pirplate_hole_dia=10;
 frontplate_y = 90;
+front_x = 2;
 
 dinrail_z = 25;
 railcontact_z = frontplate_z;
@@ -41,7 +44,10 @@ x_support_z = 8;
 ridge_z = 2;
 fan_x = 13;
 fan_y = 25;
-
+button_pos = [0,2,20];
+button_hole_dia = 18;
+button_pcb_dim =[22,20];
+button_pcb_inner_offset = 1;
 module topplate()
 {
     difference()
@@ -170,7 +176,7 @@ if(PARTNO==PARTNO_CHASSIS||PARTNO==PARTNO_ALL)
         cube([10,tft_y,2]);
 
     translate([tftoff_x-10,0,0])
-        cube([14.6,tft_y+tftoff_y+0,2]);
+        cube([14.6,1+tft_y+tftoff_y,2]);
 
     translate([8,89,0])
     rotate([0,0,-90])
@@ -232,7 +238,6 @@ if(PARTNO==PARTNO_FRONT||PARTNO==PARTNO_ALL)
     {
         frontplate_margin=plate_thickness;
         frontplate_margin_x = 5;
-        front_x = 2;
         translate([ 
             -tft_x-pirplate_x+5,
             -frontplate_margin,
@@ -254,12 +259,26 @@ if(PARTNO==PARTNO_FRONT||PARTNO==PARTNO_ALL)
                     translate([tft_x-5,tftoff_y+tft_margin_connector+7,tftoff_z+tftborder_z])
                         cube([10,tft_y-1*(7+5.5)-7,tft_z-2*tftborder_z]);
 
+if(0)
+{
                     for(i =[0,1,2])
                     {
                             button_dia=13;
                                 translate([pirplate_x/2,12,2+button_dia/2+i*5*2.54])
                                     rotate([0,90,0]) cylinder(10 ,d=button_dia,center=true);
                     }
+}
+                
+                }
+                translate(button_pos)
+                {
+                    //translate([0,2.5+10,1.5+10])
+                    translate([0,
+                            0+button_pcb_dim[1]/2, 
+                            0+button_pcb_dim[0]/2]
+                    )
+                    rotate([0,90,0]) 
+                        cylinder(10 ,d=button_hole_dia,center=true);
                 }
 
             }
@@ -278,10 +297,137 @@ if(PARTNO==PARTNO_FRONT||PARTNO==PARTNO_ALL)
                 cube([frontplate_margin_x,frontplate_y+2*frontplate_margin,plate_thickness]);
             }
 
+            translate(button_pos)
+            {
+                translate([plate_thickness,0,0]) // flush with front
+                rotate([0,270,0])
+                contoursaddle(button_pcb_dim[0],button_pcb_dim[1], 4+4,4+2.2, button_pcb_inner_offset,1);
+            }
         }
     }
 //    color("blue") cube([tftoff_x,pirplate_y,2]);
 }
 
+module button()
+{
+    //cube([18-0.5,20-0.5,1],center=true);
+    // 22 20 - 2*button_pcb_inner_offset
+    round_z = 4;
+    plate_z = 1;
+    sign_z = 0.4;
+    cube([
+        button_pcb_dim[0]-2*button_pcb_inner_offset-0.5,
+        button_pcb_dim[1]-2*button_pcb_inner_offset-0.5,
+        plate_z
+        ],center=true);
+    color("white")
+    translate([0,0,plate_z/2+round_z/2])
+        cylinder(round_z, d=button_hole_dia-1,center=true);
+
+    translate([0,0,plate_z/2+round_z+sign_z/2])
+    color("green")
+    {
+        translate([5,0,0])
+        rotate([0,0,00])
+        cylinder(sign_z, d=5,center=true,$fn=3);
+
+        translate([-5,0,0])
+        rotate([0,0,180])
+        cylinder(sign_z, d=5,center=true,$fn=3);
+
+        translate([0,5,0])
+        rotate([0,0,90])
+        cylinder(sign_z, d=5,center=true,$fn=3);
+
+        translate([0,-5,0])
+        rotate([0,0,-90])
+        cylinder(sign_z, d=5,center=true,$fn=3);
+    }
+}
+module button_holder()
+{
+    button_z=2.5;
+    button_w=6.2;
+    button_h=6.2;
+    difference()
+    {
+        cube([
+            button_pcb_dim[0]-button_pcb_inner_offset,
+            button_pcb_dim[1]-button_pcb_inner_offset,
+            button_z
+            ],center=true);
+
+        translate([(button_pcb_dim[0]-button_pcb_inner_offset)/2-button_w/2,0,0])
+            cube([ button_w, button_h,2*button_z],center=true);
+        translate([-((button_pcb_dim[0]-button_pcb_inner_offset)/2-button_w/2),0,0])
+            cube([ button_w, button_h,2*button_z],center=true);
+
+        translate([0,((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
+            cube([ button_h, button_w, 2*button_z],center=true);
+        translate([0,-((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
+            cube([ button_h, button_w, 2*button_z],center=true);
+
+    }
+    color("red")
+    translate([0,0,1/2+button_z/2])
+    difference()
+    {
+        cube([
+            button_pcb_dim[0]-0*button_pcb_inner_offset,
+            button_pcb_dim[1]-0*button_pcb_inner_offset,
+            1
+            ],center=true);
+
+        translate([(button_pcb_dim[0]-button_pcb_inner_offset)/2-button_w/2,0,0])
+        {
+            translate([-2,0,0])
+                cube([ 2, 2+button_h,2*button_z],center=true);
+            translate([2,0,0])
+                cube([ 2, 2+button_h,2*button_z],center=true);
+        }
+        translate([-((button_pcb_dim[0]-button_pcb_inner_offset)/2-button_w/2),0,0])
+        {
+            translate([-2,0,0])
+                cube([ 2, 2+button_h,2*button_z],center=true);
+            translate([2,0,0])
+                cube([ 2, 2+button_h,2*button_z],center=true);
+        }
+
+        translate([0,((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
+        {
+            translate([0,-2,0])
+                cube([8+button_w,2,2*button_z],center=true);
+            translate([0,2,0])
+                cube([8+button_w,2,2*button_z],center=true);
+
+        }
+        translate([0,-((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
+        {
+            translate([0,-2,0])
+                cube([8+button_w,2,2*button_z],center=true);
+            translate([0,2,0])
+                cube([8+button_w,2,2*button_z],center=true);
+        }
+    }
+
+}
+if(PARTNO==PARTNO_BUTTON)
+{
+    button();
+}
+if(PARTNO==PARTNO_BUTTON_HOLDER)
+{
+    button_holder();
+}
+
+if(PARTNO==PARTNO_ALL)
+{
+  translate(button_pos)
+  {
+    translate([plate_thickness,0,0])
+    rotate([0,270,0])
+    button();
+  }
+}
 
 

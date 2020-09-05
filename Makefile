@@ -9,10 +9,11 @@ all: \
 	$(OUT)/moca_dinrail.stl \
 	$(OUT)/mybook.stl \
 	$(OUT)/mybookdin.stl \
-	$(OUT)/statuslcd.stl \
+	$(OUT)/statuslcd_holder.stl \
 	$(OUT)/statuslcd_din.stl \
 	$(OUT)/statuslcd_top.stl \
 	$(OUT)/statuslcd_front.stl \
+	$(OUT)/statuslcd_button.stl \
 	$(OUT)/fan_5x5_dinrail.stl  
 
 output/mybook.stl: mybook.scad 
@@ -29,8 +30,11 @@ output/statuslcd_top.stl: statuslcd.scad
 
 output/statuslcd_front.stl: statuslcd.scad 
 	openscad -DPARTNO=2 -Dfdm=1  -o $@ $<
+output/statuslcd_button.stl: statuslcd.scad 
+	openscad -DPARTNO=4 -Dfdm=1  -o $@ $<
 
-
+output/statuslcd_holder.stl: statuslcd.scad 
+	openscad -DPARTNO=5 -Dfdm=1  -o $@ $<
 
 output/%.stl: %.scad 
 	openscad -DPARTNO=0 -Dfdm=1 -o $@ $<
