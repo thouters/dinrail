@@ -1,6 +1,16 @@
 include <contoursaddle.scad>;
 $fn=200;
 
+PARTNO_ALL = 0;
+PARTNO_RAILCLIP = 1;
+PARTNO_BOX = 2;
+
+/* change the defaultpartno to view parts during development */
+defaultpartno=PARTNO_ALL;
+/* overridden to generate individual parts with -D in the Makefile */
+PARTNO = defaultpartno;
+
+
 module contact(w_base, w_y, y, spacing)
 {
     for(space=[0, spacing+w_base])
@@ -34,8 +44,8 @@ hook_x_width = 2*contact_b+2*contact_a+hook_x_margin;
 hook_y_width = contact_d+2;
 
 hook_z_overlap = 4;
-PARTNO=1;
-if(PARTNO==0)
+
+if (PARTNO == PARTNO_BOX||PARTNO==PARTNO_ALL)
 {
     difference()
     {
@@ -62,7 +72,8 @@ if(PARTNO==0)
     }
 
 }
-else
+
+module railclip()
 {
     translate([160,-123,0])
         import("DIN_DEFAULT.stl");
@@ -77,8 +88,26 @@ else
         cube([10,5,25]);
 
     // lock the clip
-translate([-1,-6,0])
-    cube([3,6,4.4]);
+    translate([-1,-6,0])
+        cube([3,6,4.4]);
+}
+
+if (PARTNO == PARTNO_RAILCLIP)
+{
+    railclip();
+}
+
+if (PARTNO == PARTNO_ALL)
+{
+    translate([6,-12,-5])
+    color("red")
+    rotate([90,0,90])
+    railclip();
+
+    translate([138,-12,-5])
+    color("red")
+    rotate([90,0,90])
+    railclip();
 
 
 }

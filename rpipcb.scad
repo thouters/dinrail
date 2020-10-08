@@ -9,7 +9,7 @@ rpi_corner_radius=3;
 rpi_clip_z_gap = 1.8;
 peg_support_stickout=4;
 layerheight=0.2;
-rpitype=2;
+rpitype=1;
 module rpipcb_2d()
 {
 //    square([rpi_pcb_size_x,rpi_pcb_size_y]);
@@ -104,7 +104,7 @@ module rpicradle(base_plate_height=2.4,rpiraise_height=8,  clip_x_size = 5)
         {
            mirror([0,Mirror_Y,0])
            {
-            for (tabx=[((rpitype==1)? 30: 10),((rpitype==1)? 30: rpi_pcb_size_x-19)])
+            for (tabx=[((rpitype==1)? rpi_pcb_size_x-30: 10),((rpitype==1)? rpi_pcb_size_x-30: rpi_pcb_size_x-19)])
             {
                 translate([
                     tabx,

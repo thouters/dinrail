@@ -1,6 +1,8 @@
 include <contoursaddle.scad>;
 use <rpipcb.scad>;
 
+PITYPE = 1;
+
 PARTNO_ALL = 0;
 PARTNO_CHASSIS = 1;
 PARTNO_FRONT = 2;
@@ -9,7 +11,8 @@ PARTNO_BUTTON = 4;
 PARTNO_BUTTON_HOLDER = 5;
 
 /* change the defaultpartno to view parts during development */
-defaultpartno=PARTNO_BUTTON_HOLDER;
+//defaultpartno=PARTNO_BUTTON_HOLDER;
+defaultpartno=PARTNO_ALL;
 /* overridden to generate individual parts with -D in the Makefile */
 PARTNO = defaultpartno;
 
@@ -44,7 +47,7 @@ x_support_z = 8;
 ridge_z = 2;
 fan_x = 13;
 fan_y = 25;
-button_pos = [0,2,20];
+button_pos = [0,2,21];
 button_hole_dia = 18;
 button_pcb_dim =[22,20];
 button_pcb_inner_offset = 1;
@@ -122,13 +125,13 @@ if(PARTNO==PARTNO_CHASSIS||PARTNO==PARTNO_ALL)
             {
                 union()
                 {
-                linear_extrude(clip_padding_z)
-                projection(cut=true)
-                import("DIN_DEFAULT.stl");
-                translate([-160,160+40,0])
-                {
-                    cube([5,13,railcontact_z]);
-                }
+                    linear_extrude(clip_padding_z)
+                    projection(cut=true)
+                    import("DIN_DEFAULT.stl");
+                    translate([-160,160+40,0])
+                    {
+                        cube([5,13,railcontact_z]);
+                    }
                 }
 
                 translate([0,0,clip_padding_z])
@@ -140,6 +143,25 @@ if(PARTNO==PARTNO_CHASSIS||PARTNO==PARTNO_ALL)
                         import("DIN_DEFAULT.stl");
                 }
             }
+                if (PITYPE==1)
+                {
+                    // make hole for audio jack
+                    translate([0,pirplate_y-20-7, 19])
+                    {
+                        rotate([0,90,0]) 
+                        cylinder(20 ,d=10,center=true);
+                        
+                    }
+                    // make hole for composite
+                    translate([4,pirplate_y-40-5, 20])
+                    {
+                        rotate([0,90,0]) 
+                        cylinder(10 ,d=10,center=true);
+                        
+                    }
+
+                }
+
         }
         // top plate
         translate([2,0,railcontact_z - 2*plate_thickness ])
@@ -151,26 +173,28 @@ if(PARTNO==PARTNO_CHASSIS||PARTNO==PARTNO_ALL)
                 frontplate_y,
                 ridge_z]);
         }
-        // back clip
         translate([-7,0,railcontact_z - plate_thickness ])
         {
             cube([13,frontplate_y,plate_thickness+0.2]);
-
-        translate([0,0,- (plate_thickness+0.2) ])
-            cube([7,frontplate_y,plate_thickness+0.2]);
+        }
+        // back clip
+        if(0)
+        {
+            translate([-7,0,railcontact_z - plate_thickness ])
+            {
+                translate([0,0,- (plate_thickness+0.2) ])
+                    cube([7,frontplate_y,plate_thickness+0.2]);
+            }
+        }
+        if(0)
+        {
+            translate([-7,0,0])
+                cube([13,frontplate_y,plate_thickness+0.2]);
+         translate([-7,0,0])
+                cube([7,frontplate_y,plate_thickness+0.2]);
         }
 
-
-        translate([-7,0,0])
-            cube([13,frontplate_y,plate_thickness+0.2]);
-
-        translate([-7,0,0])
-            cube([7,frontplate_y,plate_thickness+0.2]);
     }
-
-    // clip/lock holder
-    translate([-1,-6,clip_padding_z])
-        cube([3,6,4.4]);
 
     translate([0,20,0])
         cube([10,tft_y,2]);
@@ -301,7 +325,7 @@ if(0)
             {
                 translate([plate_thickness,0,0]) // flush with front
                 rotate([0,270,0])
-                contoursaddle(button_pcb_dim[0],button_pcb_dim[1], 4+4,4+2.2, button_pcb_inner_offset,1);
+                contoursaddle(button_pcb_dim[0],button_pcb_dim[1], 4+4,4, button_pcb_inner_offset,1);
             }
         }
     }
@@ -312,19 +336,20 @@ module button()
 {
     //cube([18-0.5,20-0.5,1],center=true);
     // 22 20 - 2*button_pcb_inner_offset
-    round_z = 4;
+    round_z = 2;
     plate_z = 1;
-    sign_z = 0.4;
+    sign_z = 0.6;
+    translate([0,0,plate_z/2])
     cube([
         button_pcb_dim[0]-2*button_pcb_inner_offset-0.5,
         button_pcb_dim[1]-2*button_pcb_inner_offset-0.5,
         plate_z
         ],center=true);
     color("white")
-    translate([0,0,plate_z/2+round_z/2])
-        cylinder(round_z, d=button_hole_dia-1,center=true);
+    translate([0,0,plate_z+round_z/2])
+        cylinder(round_z, d=button_hole_dia-0.5,center=true);
 
-    translate([0,0,plate_z/2+round_z+sign_z/2])
+    translate([0,0,plate_z+round_z+sign_z/2])
     color("green")
     {
         translate([5,0,0])
@@ -367,9 +392,44 @@ module button_holder()
         translate([0,-((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
             cube([ button_h, button_w, 2*button_z],center=true);
 
+        switch_leg=2.5;
+        switch_leg_width = 1;
+        switch_leg_length = 4;
+        translate([(button_pcb_dim[0]-button_pcb_inner_offset)/2-button_w/2,0,0])
+        {
+            translate([-switch_leg,0,0])
+                cube([ switch_leg_width, switch_leg_length+button_h,2*button_z],center=true);
+            translate([switch_leg,0,0])
+                cube([ switch_leg_width, switch_leg_length+button_h,2*button_z],center=true);
+        }
+        translate([-((button_pcb_dim[0]-button_pcb_inner_offset)/2-button_w/2),0,0])
+        {
+            translate([-switch_leg,0,0])
+                cube([ switch_leg_width, switch_leg_length+button_h,2*button_z],center=true);
+            translate([switch_leg,0,0])
+                cube([ switch_leg_width, switch_leg_length+button_h,2*button_z],center=true);
+        }
+
+        translate([0,((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
+        {
+            translate([0,-switch_leg,0])
+                cube([switch_leg_length+button_w,switch_leg_width,2*button_z],center=true);
+            translate([0,switch_leg,0])
+                cube([switch_leg_length+button_w,switch_leg_width,2*button_z],center=true);
+
+        }
+        translate([0,-((button_pcb_dim[1]-button_pcb_inner_offset)/2-button_w/2),0])
+        {
+            translate([0,-switch_leg,0])
+                cube([switch_leg_length+button_w,switch_leg_width,2*button_z],center=true);
+            translate([0,switch_leg,0])
+                cube([switch_leg_length+button_w,switch_leg_width,2*button_z],center=true);
+        }
+
     }
     color("red")
     translate([0,0,1/2+button_z/2])
+    {
     difference()
     {
         cube([
@@ -409,7 +469,9 @@ module button_holder()
                 cube([8+button_w,2,2*button_z],center=true);
         }
     }
-
+    cube([button_pcb_dim[0],2,1],center=true);
+    cube([2,button_pcb_dim[1],1],center=true);
+    }
 }
 if(PARTNO==PARTNO_BUTTON)
 {
@@ -422,10 +484,12 @@ if(PARTNO==PARTNO_BUTTON_HOLDER)
 
 if(PARTNO==PARTNO_ALL)
 {
+    translate([tftoff_x+tft_x,0,0])
+
   translate(button_pos)
   {
     translate([plate_thickness,0,0])
-    rotate([0,270,0])
+    rotate([0,90,0])
     button();
   }
 }
