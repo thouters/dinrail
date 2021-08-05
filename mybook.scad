@@ -28,10 +28,10 @@ module contact(w_base, w_y, y, spacing)
 }
 
 
-base_hdd_width = 49.5;
-hdd_x_width = 168;
+base_hdd_width = 49.5+4;
+hdd_x_width = 168+1;
 fanbore_cylinderlength = 10;
-fanbore_dia = 30;
+fanbore_dia = 10;
 hdd_contact_z = 80;
 //hdd_contact_z = 30;
 middlesupport_x = 10;
@@ -44,17 +44,30 @@ hook_x_width = 2*contact_b+2*contact_a+hook_x_margin;
 hook_y_width = contact_d+2;
 
 hook_z_overlap = 4;
+bottom_z =2;
 
 if (PARTNO == PARTNO_BOX||PARTNO==PARTNO_ALL)
 {
     difference()
     {
-        contoursaddle(hdd_x_width ,base_hdd_width, hdd_contact_z, 4, 5, 2);
-        translate([-fanbore_cylinderlength/2,base_hdd_width/2,5+fanbore_dia/2])
-        rotate([0,90,0]) cylinder(fanbore_cylinderlength ,d=fanbore_dia);
+        contoursaddle(hdd_x_width ,base_hdd_width, hdd_contact_z, bottom_z, 5, 1.5);
+        y_0 = 4+ fanbore_dia/2;
+        z_0 = 4+fanbore_dia/2;
+        for (zstep = [0,1,2,3])
+        {
+            for (ystep = [0,1,2])
+            {
+                y = ystep*(fanbore_dia+8)+y_0;
+                z = zstep*(fanbore_dia+8)+z_0;
+
+                translate([hdd_x_width/2,y,z])
+                    //rotate([0,90,0]) cylinder(hdd_x_width*2 ,d=fanbore_dia,center=true);
+                    cube([hdd_x_width*2,fanbore_dia,fanbore_dia],center=true);
+            }
+        }
     }
 
-    translate([168/2-middlesupport_x/2,0,0]) cube([middlesupport_x,base_hdd_width,4]);
+    translate([168/2-middlesupport_x/2,0,0]) cube([middlesupport_x,base_hdd_width,bottom_z]);
 
     for(hookmount_x=[0, hdd_x_width-hook_x_width])
     {
